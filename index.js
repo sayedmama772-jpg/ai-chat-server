@@ -4,16 +4,16 @@ import fetch from "node-fetch";
 const app = express();
 app.use(express.json());
 
-/* =========================
+/* ======================
    Health Check
-========================= */
+====================== */
 app.get("/", (req, res) => {
   res.send("AI Server Running Successfully");
 });
 
-/* =========================
+/* ======================
    Chat API
-========================= */
+====================== */
 app.post("/chat", async (req, res) => {
   try {
     const userMessage = req.body.message;
@@ -22,8 +22,9 @@ app.post("/chat", async (req, res) => {
       return res.status(400).json({ error: "message is required" });
     }
 
+    // ===== SYSTEM PROMPT (AI Personality) =====
     const systemPrompt = `
-তুমি একজন অত্যন্ত জ্ঞানী, ভদ্র, স্মার্ট ও দায়িত্বশীল কৃত্রিম বুদ্ধিমত্তা।
+তুমি একজন অত্যন্ত জ্ঞানী, ভদ্র, স্মার্ট ও দায়িত্বশীল কৃত্রিম বুদ্ধিমত্তা।
 তুমি Sayed-এর ব্যক্তিগত AI।
 
 Sayed সম্পর্কে তথ্য:
@@ -33,15 +34,15 @@ Sayed সম্পর্কে তথ্য:
 - বাড়ি: নারায়ণগঞ্জ
 - তিনি মুক্তচিন্তা ও আধুনিক প্রযুক্তি পছন্দ করেন
 - ভাষা: বাংলা, আরবি, ইংরেজি, ফার্সি, উর্দু
-- দক্ষতা: গ্রাফিক ডিজাইন, ওয়েব ডেভেলপমেন্ট, কোডিং, এথিক্যাল হ্যাকিং,
-  ডিজিটাল মার্কেটিং, AI
+- দক্ষতা: গ্রাফিক্স ডিজাইন, ওয়েব ডেভেলপমেন্ট, কোডিং,
+  ইথিকাল হ্যাকিং, ডিজিটাল মার্কেটিং, AI ও আধুনিক টেকনোলজি
 
 আচরণ নির্দেশনা:
 - বন্ধুর মতো কথা বলবে
 - স্মার্ট ও বিবেচনার সাথে উত্তর দেবে
-- ইসলামিক ও টেকনোলজির প্রশ্নে ভারসাম্য রাখবে
-- প্রয়োজনে ভাষা পরিবর্তন করবে
-- কখনো ক্ষতিকর বা বিভ্রান্তিকর উত্তর দেবে না
+- ইসলামিক ও টেকনোলজি প্রশ্নে ব্যালেন্স রাখবে
+- ভুল বা ক্ষতিকর তথ্য দিবে না
+- প্রয়োজনে ভাষা পরিবর্তন করবে
 `;
 
     const response = await fetch(
@@ -50,11 +51,11 @@ Sayed সম্পর্কে তথ্য:
         method: "POST",
         headers: {
           "Authorization": `Bearer ${process.env.HF_TOKEN}`,
-          "Content-Type": "application/json"
+          "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          inputs: `${systemPrompt}\n\nUser: ${userMessage}\nAI:`
-        })
+          inputs: `${systemPrompt}\n\nUser: ${userMessage}\nAI:`,
+        }),
       }
     );
 
@@ -63,7 +64,11 @@ Sayed সম্পর্কে তথ্য:
     let reply = "দুঃখিত, এখন উত্তর দিতে পারছি না।";
 
     if (Array.isArray(data) && data[0]?.generated_text) {
-      reply = data[0].generated_text.replace(systemPrompt, "").trim();
+      reply = data[0].generated_text
+        .replace(systemPrompt, "")
+        .replace("User:", "")
+        .replace("AI:", "")
+        .trim();
     }
 
     res.json({ reply });
@@ -74,9 +79,9 @@ Sayed সম্পর্কে তথ্য:
   }
 });
 
-/* =========================
+/* ======================
    Server Start
-========================= */
+====================== */
 const PORT = process.env.PORT || 3000;
 
 app.listen(PORT, () => {
