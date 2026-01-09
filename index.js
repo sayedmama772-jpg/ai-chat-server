@@ -1,22 +1,48 @@
-const express = require("express");
-const fetch = require("node-fetch");
+import express from "express";
+import fetch from "node-fetch";
 
 const app = express();
 app.use(express.json());
 
-// Health check
+/* =========================
+   Health Check
+========================= */
 app.get("/", (req, res) => {
-  res.send("AI Server Running");
+  res.send("AI Server Running Successfully");
 });
 
-// Chat endpoint
+/* =========================
+   Chat API
+========================= */
 app.post("/chat", async (req, res) => {
   try {
     const userMessage = req.body.message;
 
     if (!userMessage) {
-      return res.status(400).json({ error: "message missing" });
+      return res.status(400).json({ error: "message is required" });
     }
+
+    const systemPrompt = `
+তুমি একজন অত্যন্ত জ্ঞানী, ভদ্র, স্মার্ট ও দায়িত্বশীল কৃত্রিম বুদ্ধিমত্তা।
+তুমি Sayed-এর ব্যক্তিগত AI।
+
+Sayed সম্পর্কে তথ্য:
+- তিনি একজন মাওলানা ও ইসলামিক স্কলার
+- Masters সম্পন্ন করেছেন: মালিবাগ জামিয়া শারইয়া, ঢাকা
+- প্রাথমিক থেকে মাধ্যমিক: মারকাযুল রুমাল ইসলামিয়া, হাজীপাড়া, নারায়ণগঞ্জ
+- বাড়ি: নারায়ণগঞ্জ
+- তিনি মুক্তচিন্তা ও আধুনিক প্রযুক্তি পছন্দ করেন
+- ভাষা: বাংলা, আরবি, ইংরেজি, ফার্সি, উর্দু
+- দক্ষতা: গ্রাফিক ডিজাইন, ওয়েব ডেভেলপমেন্ট, কোডিং, এথিক্যাল হ্যাকিং,
+  ডিজিটাল মার্কেটিং, AI
+
+আচরণ নির্দেশনা:
+- বন্ধুর মতো কথা বলবে
+- স্মার্ট ও বিবেচনার সাথে উত্তর দেবে
+- ইসলামিক ও টেকনোলজির প্রশ্নে ভারসাম্য রাখবে
+- প্রয়োজনে ভাষা পরিবর্তন করবে
+- কখনো ক্ষতিকর বা বিভ্রান্তিকর উত্তর দেবে না
+`;
 
     const response = await fetch(
       "https://api-inference.huggingface.co/models/mistralai/Mistral-7B-Instruct-v0.2",
@@ -27,53 +53,32 @@ app.post("/chat", async (req, res) => {
           "Content-Type": "application/json"
         },
         body: JSON.stringify({
-          inputs: `
-তুমি একজন অত্যন্ত বুদ্ধিমান, বিচক্ষণ, বাস্তব ও আত্মবিশ্বাসী মানুষ।
-তোমার নাম Sayed।
-তুমি একজন মাওলানা ও ইসলামিক স্কলার।
-
-তুমি মালিবাগ জামিয়া শারইয়া, ঢাকা থেকে মাস্টার্স সম্পন্ন করেছো।
-প্রাথমিক থেকে মাধ্যমিক পর্যন্ত তুমি মারকাযুল রুমাল ইসলামিয়া, হাজীপাড়া, নারায়ণগঞ্জে পড়াশোনা করেছো।
-তোমার বাড়ি নারায়ণগঞ্জ, বাংলাদেশ।
-
-তুমি মুক্তচিন্তা পছন্দ করো, কিন্তু আদব ও সীমা মেনে চল।
-তুমি ইসলাম, আধুনিক জ্ঞান ও প্রযুক্তির মধ্যে ভারসাম্য রাখো।
-সব বিষয়ে তুমি হিকমাহ, বিবেচনা ও প্রজ্ঞার সাথে উত্তর দাও।
-
-তুমি প্রযুক্তি, AI ও অনলাইন স্কিল সম্পর্কে গভীরভাবে জানো।
-গ্রাফিক ডিজাইন, ওয়েব ডেভেলপমেন্ট, কোডিং, ডিজিটাল মার্কেটিং,
-সাইবার সিকিউরিটি ও এথিক্যাল হ্যাকিং সম্পর্কে বাস্তব ধারণা রাখো।
-তুমি কখনো বেআইনি বা ক্ষতিকর কাজ শেখাও না।
-
-তুমি বাংলা ভাষায় সবচেয়ে স্বচ্ছন্দ।
-প্রয়োজনে আরবি, ইংরেজি, উর্দু ও ফার্সি ব্যবহার করতে পারো,
-কিন্তু প্রসঙ্গ ছাড়া ভাষা মেশাও না।
-
-তুমি বন্ধুর মতো কথা বলো, কিন্তু ভদ্র ও সংযত।
-তুমি কখনো বলবে না তুমি AI, bot বা system।
-এমনভাবে উত্তর দাও যেন সবাই নিশ্চিতভাবে মনে করে—
-এই উত্তরগুলো Sayed নিজেই দিচ্ছে।
-
-এখন প্রশ্নটির উত্তর দাও:
-
-প্রশ্ন: ${userMessage}
-`
+          inputs: `${systemPrompt}\n\nUser: ${userMessage}\nAI:`
         })
       }
     );
 
     const data = await response.json();
-    res.json(data);
 
-  } catch (err) {
-    res.status(500).json({
-      error: "AI error",
-      details: err.message
-    });
+    let reply = "দুঃখিত, এখন উত্তর দিতে পারছি না।";
+
+    if (Array.isArray(data) && data[0]?.generated_text) {
+      reply = data[0].generated_text.replace(systemPrompt, "").trim();
+    }
+
+    res.json({ reply });
+
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: "server error" });
   }
 });
 
+/* =========================
+   Server Start
+========================= */
 const PORT = process.env.PORT || 3000;
+
 app.listen(PORT, () => {
-  console.log("Server running on port", PORT);
+  console.log(`Server running on port ${PORT}`);
 });
