@@ -13,6 +13,25 @@ app.get("/webhook", (req, res) => {
   }
   return res.sendStatus(403);
 });
+app.post("/webhook", async (req, res) => {
+  const entry = req.body.entry?.[0];
+  const messaging = entry?.messaging?.[0];
+
+  if (!messaging || !messaging.message || messaging.message.is_echo) {
+    return res.sendStatus(200);
+  }
+
+  const user = messaging.sender.id;
+  const rawText = messaging.message.text || "";
+  const text = clean(rawText);
+
+  remember(user, text);
+
+  const reply = brain(user, text);
+  await sendMessage(user, reply);
+
+  res.sendStatus(200);
+});
 
 /* ================== BOT IDENTITY ================== */
 const BOT_PROFILE = {
